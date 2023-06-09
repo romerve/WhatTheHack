@@ -22,11 +22,15 @@ Important Notes:
 * Remember, you are running this inside Azure Cloud Shell!
 * Don't change the `--admin-username` value. 
 
-```
+```shell
 RG=<your resource group>
 NSG=dockerhostnsg
 VM=dockerhostvm
-az group create -n $RG -l eastus
+LOC=eastus
+```
+
+```shell
+az group create -n $RG -l $LOC
 az network nsg create -g $RG -n $NSG
 az network nsg rule create -g $RG --nsg-name $NSG -n http --priority 1000 --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 80 --access Allow --protocol Tcp --description "http"
 az network nsg rule create -g $RG --nsg-name $NSG -n docker --priority 1010 --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 2375-2376 --access Allow --protocol Tcp --description "docker"
@@ -34,16 +38,20 @@ az network nsg rule create -g $RG --nsg-name $NSG -n ssh --priority 1020 --sourc
 az vm create -n $VM -g $RG --image Canonical:UbuntuServer:18.04-LTS:latest --nsg $NSG --admin-username dockeradmin --admin-password d0cker@dminzz --authentication-type password --custom-data docker.yaml 
 ```
 
-Once this is done successfully, run the following inside Azure Cloud Shell. This will wire up the Docker Client in Azure Cloud Shell to talk to the VM in Azure. **Note** that you will need to update the script below with the actual IP Address for your server (you should see that in the output of the `az vm create` command you just ran).
+Once this is done successfully, run the following inside Azure Cloud Shell. This will wire up the Docker Client in Azure Cloud Shell to talk to the VM in Azure. **Note** that you will need to update the script below with the actual (public) IP Address for your server (you should see that in the output of the `az vm create` command you just ran).
 
+```shell
+VM_IP=<vm-ip>
 ```
-export DOCKER_HOST=tcp://<vm-ip>:2375/
+
+```shell
+export DOCKER_HOST=tcp://$VM_IP:2375/
 export DOCKER_TLS_VERIFY=
 export DOCKER_CERT_PATH=
 ```
 
 Validate your docker host VM is properly provisioned and ready to use.
-```
+```shell
 docker images
 docker ps
 ```
@@ -55,8 +63,8 @@ Notice that you are using the local docker client inside the Azure Cloud Shel an
 
 
 ## Install docker-compose in your Azure Cloud Shell
-```
-mkdir tools
+```shell
+mkdir $HOME/tools
 curl -L "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m)" -o $HOME/tools/docker-compose
 chmod +x $HOME/tools/docker-compose
 echo "export PATH=$PATH:$HOME/tools" >> ~/.bashrc
